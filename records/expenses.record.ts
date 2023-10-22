@@ -25,7 +25,7 @@ export class ExpensesRecord implements ExpenseEntity {
         return results.map(obj => new ExpensesRecord(obj))
     }
 
-    async getOne(id: string): Promise<ExpensesRecord> | null {
+    static async getOne(id: string): Promise<ExpensesRecord> | null {
         const [results] = await pool.execute("SELECT * FROM `spendings` WHERE `id` = :id", {
             id,
         }) as ExpensesRecordResults;
