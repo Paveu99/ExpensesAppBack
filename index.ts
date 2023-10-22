@@ -1,6 +1,7 @@
 import express, {json} from "express"
 import cors from "cors"
 import {handleError} from "./utils/errors";
+import {expensesRouter} from "./routers/expense";
 
 const app = express()
 
@@ -9,6 +10,8 @@ app.use(cors({
 }));
 
 app.use(json());
+
+app.use('/expenses', expensesRouter)
 
 app.use(handleError)
 
