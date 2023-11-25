@@ -33,7 +33,6 @@ export class ExpensesRecord implements ExpenseEntity {
     }
 
     async insert(): Promise<void> {
-
         if(!this.id) {
             this.id = uuid()
         }
@@ -43,6 +42,16 @@ export class ExpensesRecord implements ExpenseEntity {
             name: this.name,
             cost: this.cost,
             month: this.month
+        })
+    }
+
+    async updateRecord(body: ExpenseEntity): Promise<void> {
+        await pool.execute("UPDATE `spendings` SET `category` = :category, `name` = :name, `cost` = :cost, `month` = :month WHERE `id` = :id", {
+            id: this.id,
+            category: body.category,
+            name: body.name,
+            cost: body.cost,
+            month: body.month,
         })
     }
 
