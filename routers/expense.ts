@@ -30,8 +30,7 @@ expensesRouter
 
         const expensesGroupedByCategory: Record<string, ExpenseEntity[]> = sortedData.reduce(
             (acc, obj) => {
-                const category = obj.category;
-                const key = `${category}`;
+                const key = obj.category;
 
                 acc[key] = acc[key] || [];
                 acc[key].push(obj);
