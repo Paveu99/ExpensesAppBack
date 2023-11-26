@@ -3,5 +3,6 @@ export interface ExpenseEntity {
     category: string,
     name: string,
     cost: number,
-    month: string
+    month: string,
+    notes: string,
 }
