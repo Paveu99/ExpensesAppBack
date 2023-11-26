@@ -11,6 +11,7 @@ export class PlannedExpensesRecord implements ExpenseEntity {
     public id: string;
     public month: string;
     public name: string;
+    public notes: string;
 
     constructor(obj: ExpenseEntity) {
         this.id = obj.id;
@@ -18,6 +19,7 @@ export class PlannedExpensesRecord implements ExpenseEntity {
         this.name = obj.name;
         this.cost = obj.cost;
         this.month = obj.month;
+        this.notes = obj.notes;
     }
 
     static async listAll(): Promise<PlannedExpensesRecord[]> {
@@ -36,22 +38,24 @@ export class PlannedExpensesRecord implements ExpenseEntity {
         if(!this.id) {
             this.id = uuid()
         }
-        await pool.execute("INSERT INTO `plannedspendings` VALUES(:id, :category, :name, :cost, :month)", {
+        await pool.execute("INSERT INTO `plannedspendings` VALUES(:id, :category, :name, :cost, :month, :notes)", {
             id: this.id,
             category: this.category,
             name: this.name,
             cost: this.cost,
-            month: this.month
+            month: this.month,
+            notes: this.notes,
         })
     }
 
     async updateRecord(body: ExpenseEntity): Promise<void> {
-        await pool.execute("UPDATE `plannedspendings` SET `category` = :category, `name` = :name, `cost` = :cost, `month` = :month WHERE `id` = :id", {
+        await pool.execute("UPDATE `plannedspendings` SET `category` = :category, `name` = :name, `cost` = :cost, `month` = :month, `notes` = :notes WHERE `id` = :id", {
             id: this.id,
             category: body.category,
             name: body.name,
             cost: body.cost,
             month: body.month,
+            notes: body.notes,
         })
     }
 

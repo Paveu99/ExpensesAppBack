@@ -8,7 +8,12 @@ export const expensesRouter =Router()
 expensesRouter
     .get('/', async (req, res) => {
         const allExpenses = await ExpensesRecord.listAll()
-        // TODO: POMYŚLEĆ O TYM CZY JAKAŚ INFORMACJA JESZCZE NIE BĘDZIE PRZYDATNA JAK SUMOWANIE
+        /**
+         * TODO: POMYŚLEĆ O TYM CZY JAKAŚ INFORMACJA JESZCZE NIE BĘDZIE PRZYDATNA JAK SUMOWANIE
+         *  PRZEMYŚLEĆ ROUTERY ODNOŚNIE JAK DOKŁADNIE MA WYGLĄDAĆ APLIKACJA CZY DLA KAŻDEGO MIESIĄCA NIE POWININE BYĆ OSOBNY ROUTER Z TYTUŁEM DETAILED VIEW A DLA GŁÓWNEGO VIEW POWINNY BYĆ WSZYSTKIE ROUTERY
+         *  NA PEWNO UMIEŚCIĆ ZAPLANOWANE ZAKUPY NA PRZYSŁOŚĆ
+         *
+         */
         const sortedData = allExpenses.sort(
             (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
         );
