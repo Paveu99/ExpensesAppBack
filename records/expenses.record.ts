@@ -24,6 +24,10 @@ export class ExpensesRecord implements ExpenseEntity {
 
     static async listAll(): Promise<ExpensesRecord[]> {
         const [results] = await pool.execute("SELECT * FROM `spendings`") as ExpensesRecordResults;
+        results.forEach((expense: any) => {
+            const parsedDate: Date = new Date(expense.month);
+            expense.month = parsedDate.toISOString().split('T')[0];
+        });
         return results.map(obj => new ExpensesRecord(obj))
     }
 
@@ -31,6 +35,10 @@ export class ExpensesRecord implements ExpenseEntity {
         const [results] = await pool.execute("SELECT * FROM `spendings` WHERE `id` = :id", {
             id,
         }) as ExpensesRecordResults;
+        results.forEach((expense: any) => {
+            const parsedDate: Date = new Date(expense.month);
+            expense.month = parsedDate.toISOString().split('T')[0];
+        });
         return results.length === 0 ? null : new ExpensesRecord(results[0])
     }
 

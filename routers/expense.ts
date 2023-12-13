@@ -70,6 +70,7 @@ expensesRouter
         res.json({
             answer: `OK`,
             name: req.body.name,
+            newExpense: expense
         })
     })
 
