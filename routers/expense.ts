@@ -7,30 +7,25 @@ export const expensesRouter =Router()
 
 expensesRouter
     .get('/', async (req, res) => {
-        const allExpenses = await ExpensesRecord.listAll()
-        /**
-         * TODO: POMYŚLEĆ O TYM CZY JAKAŚ INFORMACJA JESZCZE NIE BĘDZIE PRZYDATNA JAK SUMOWANIE
-         *  PRZEMYŚLEĆ ROUTERY ODNOŚNIE JAK DOKŁADNIE MA WYGLĄDAĆ APLIKACJA CZY DLA KAŻDEGO MIESIĄCA NIE POWININE BYĆ OSOBNY ROUTER Z TYTUŁEM DETAILED VIEW A DLA GŁÓWNEGO VIEW POWINNY BYĆ WSZYSTKIE ROUTERY
-         *  NA PEWNO UMIEŚCIĆ ZAPLANOWANE ZAKUPY NA PRZYSŁOŚĆ
-         *
-         */
+        const summary = await ExpensesRecord.getSummary();
+        const allExpenses = await ExpensesRecord.listAll();
         const sortedData = allExpenses.sort(
             (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
         );
 
-        const expensesGroupedByDate: Record<string, ExpenseEntity[]> = sortedData.reduce(
+        const expensesGroupedByDate: Record<string, Record<string, ExpenseEntity[]>> = sortedData.reduce(
             (acc, obj) => {
                 const date = new Date(obj.month);
                 const year = date.getFullYear();
                 const month = date.toLocaleString('en-US', { month: 'long' });
-                const key = `${month} ${year}`;
 
-                acc[key] = acc[key] || [];
-                acc[key].push(obj);
+                acc[year] = acc[year] || {};
+                acc[year][month] = acc[year][month] || [];
+                acc[year][month].push(obj);
 
                 return acc;
             },
-            {} as Record<string, ExpenseEntity[]>
+            {} as Record<string, Record<string, ExpenseEntity[]>>
         );
 
         const expensesGroupedByCategory: Record<string, ExpenseEntity[]> = sortedData.reduce(
@@ -46,9 +41,10 @@ expensesRouter
         );
 
         res.json({
+            summary,
             allExpenses,
             expensesGroupedByDate,
-            expensesGroupedByCategory
+            expensesGroupedByCategory,
         })
     })
 
