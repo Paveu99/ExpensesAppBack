@@ -3,7 +3,15 @@ import {pool} from "../utils/db";
 import {FieldPacket} from "mysql2"
 import {v4 as uuid} from "uuid"
 
-type ExpensesRecordResults =[ExpensesRecord[], FieldPacket[]]
+interface Summary {
+    sum: number,
+    category: string,
+    latest: string,
+    month: string
+}
+
+type ExpensesRecordResults =[ExpensesRecord[], FieldPacket[]];
+type SummaryResults =[Summary[], FieldPacket[]];
 
 export class ExpensesRecord implements ExpenseEntity {
     public category: string;
@@ -20,6 +28,20 @@ export class ExpensesRecord implements ExpenseEntity {
         this.cost = obj.cost;
         this.month = obj.month;
         this.notes = obj.notes;
+    }
+
+    static async getSummary(): Promise<Summary> {
+        const [sum] = await pool.execute("SELECT SUM(cost) AS sum FROM `spendings`") as SummaryResults;
+        const [latest] = await pool.execute("SELECT name as latest FROM `spendings` ORDER BY month DESC LIMIT 1") as SummaryResults;
+        const [month] = await pool.execute("SELECT CONCAT(MONTHNAME(MAX(month)), ' ', YEAR(MAX(month))) AS month FROM `spendings` GROUP BY YEAR(month), MONTH(month) ORDER BY SUM(cost) DESC LIMIT 1") as SummaryResults;
+        const [category] = await pool.execute("SELECT category AS category FROM `spendings` GROUP BY category ORDER BY SUM(cost) DESC LIMIT 1") as SummaryResults;
+
+        return {
+            ...sum[0],
+            ...latest[0],
+            ...category[0],
+            ...month[0],
+        }
     }
 
     static async listAll(): Promise<ExpensesRecord[]> {
