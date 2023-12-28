@@ -3,15 +3,21 @@ import {pool} from "../utils/db";
 import {FieldPacket} from "mysql2"
 import {v4 as uuid} from "uuid"
 
-interface Summary {
+interface SummaryMonth {
     sum: number,
-    category: string,
+    categoryMost: string,
+    categoryLeast: string,
     latest: string,
-    month: string
+}
+
+interface Summary extends SummaryMonth{
+    monthMost: string,
+    monthLeast: string,
 }
 
 type ExpensesRecordResults =[ExpensesRecord[], FieldPacket[]];
 type SummaryResults =[Summary[], FieldPacket[]];
+type SummaryResultsMonth =[SummaryMonth[], FieldPacket[]];
 
 export class ExpensesRecord implements ExpenseEntity {
     public category: string;
@@ -33,14 +39,74 @@ export class ExpensesRecord implements ExpenseEntity {
     static async getSummary(): Promise<Summary> {
         const [sum] = await pool.execute("SELECT SUM(cost) AS sum FROM `spendings`") as SummaryResults;
         const [latest] = await pool.execute("SELECT name as latest FROM `spendings` ORDER BY month DESC LIMIT 1") as SummaryResults;
-        const [month] = await pool.execute("SELECT CONCAT(MONTHNAME(MAX(month)), ' ', YEAR(MAX(month))) AS month FROM `spendings` GROUP BY YEAR(month), MONTH(month) ORDER BY SUM(cost) DESC LIMIT 1") as SummaryResults;
-        const [category] = await pool.execute("SELECT category AS category FROM `spendings` GROUP BY category ORDER BY SUM(cost) DESC LIMIT 1") as SummaryResults;
+        const [monthMost] = await pool.execute("SELECT CONCAT(MONTHNAME(MAX(month)), ' ', YEAR(MAX(month))) AS monthMost FROM `spendings` GROUP BY YEAR(month), MONTH(month) ORDER BY SUM(cost) DESC LIMIT 1") as SummaryResults;
+        const [monthLeast] = await pool.execute("SELECT CONCAT(MONTHNAME(MAX(month)), ' ', YEAR(MAX(month))) AS monthLeast FROM `spendings` GROUP BY YEAR(month), MONTH(month) ORDER BY SUM(cost) ASC LIMIT 1") as SummaryResults;
+        const [categoryMost] = await pool.execute("SELECT category AS categoryMost FROM `spendings` GROUP BY category ORDER BY SUM(cost) DESC LIMIT 1") as SummaryResults;
+        const [categoryLeast] = await pool.execute("SELECT category AS categoryLeast FROM `spendings` GROUP BY category ORDER BY SUM(cost) ASC LIMIT 1") as SummaryResults;
 
         return {
             ...sum[0],
             ...latest[0],
-            ...category[0],
-            ...month[0],
+            ...categoryMost[0],
+            ...categoryLeast[0],
+            ...monthMost[0],
+            ...monthLeast[0],
+        }
+    }
+
+    static async getYearSummary(year: string | undefined): Promise<Summary> {
+        const [sum] = await pool.execute("SELECT SUM(cost) AS sum FROM `spendings` WHERE YEAR(month) = :year", {
+            year: year,
+        }) as SummaryResults;
+        const [latest] = await pool.execute("SELECT name as latest FROM `spendings` WHERE YEAR(month) = :year ORDER BY month DESC LIMIT 1", {
+            year: year,
+        }) as SummaryResults;
+        const [monthMost] = await pool.execute("SELECT MONTHNAME(MAX(month)) AS monthMost FROM `spendings` WHERE YEAR(month) = :year GROUP BY YEAR(month), MONTH(month) ORDER BY SUM(cost) DESC LIMIT 1", {
+            year: year,
+        }) as SummaryResults;
+        const [monthLeast] = await pool.execute("SELECT MONTHNAME(MAX(month)) AS monthLeast FROM `spendings` WHERE YEAR(month) = :year GROUP BY YEAR(month), MONTH(month) ORDER BY SUM(cost) ASC LIMIT 1", {
+            year: year,
+        }) as SummaryResults;
+        const [categoryMost] = await pool.execute("SELECT category AS categoryMost FROM `spendings` WHERE YEAR(month) = :year GROUP BY category ORDER BY SUM(cost) DESC LIMIT 1", {
+            year: year,
+        }) as SummaryResults;
+        const [categoryLeast] = await pool.execute("SELECT category AS categoryLeast FROM `spendings` WHERE YEAR(month) = :year GROUP BY category ORDER BY SUM(cost) ASC LIMIT 1", {
+            year: year,
+        }) as SummaryResults;
+
+        return {
+            ...sum[0],
+            ...latest[0],
+            ...categoryMost[0],
+            ...categoryLeast[0],
+            ...monthMost[0],
+            ...monthLeast[0],
+        }
+    }
+
+    static async getMonthSummary(year: string | undefined, month: string | undefined): Promise<SummaryMonth> {
+        const [sum] = await pool.execute("SELECT SUM(cost) AS sum FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month", {
+            year: year,
+            month: month,
+        }) as SummaryResultsMonth;
+        const [latest] = await pool.execute("SELECT name as latest FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month ORDER BY month DESC LIMIT 1", {
+            year: year,
+            month: month,
+        }) as SummaryResultsMonth;
+        const [categoryMost] = await pool.execute("SELECT category AS categoryMost FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY SUM(cost) DESC LIMIT 1", {
+            year: year,
+            month: month,
+        }) as SummaryResultsMonth;
+        const [categoryLeast] = await pool.execute("SELECT category AS categoryLeast FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY SUM(cost) ASC LIMIT 1", {
+            year: year,
+            month: month,
+        }) as SummaryResultsMonth;
+
+        return {
+            ...sum[0],
+            ...latest[0],
+            ...categoryMost[0],
+            ...categoryLeast[0],
         }
     }
 
