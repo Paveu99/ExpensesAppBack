@@ -28,23 +28,26 @@ expensesRouter
             {} as Record<string, Record<string, ExpenseEntity[]>>
         );
 
-        const expensesGroupedByCategory: Record<string, ExpenseEntity[]> = sortedData.reduce(
-            (acc, obj) => {
-                const key = obj.category;
-
-                acc[key] = acc[key] || [];
-                acc[key].push(obj);
-
-                return acc;
-            },
-            {} as Record<string, ExpenseEntity[]>
-        );
-
         res.json({
             summary,
             allExpenses,
             expensesGroupedByDate,
-            expensesGroupedByCategory,
+        })
+    })
+
+    .get('/:year', async (req, res) => {
+        const summaryYear = await ExpensesRecord.getYearSummary(req.params.year);
+
+        res.json({
+            summaryYear,
+        })
+    })
+
+    .get('/:year/:month', async (req, res) => {
+        const summaryMonth = await ExpensesRecord.getMonthSummary(req.params.year, req.params.month);
+
+        res.json({
+            summaryMonth,
         })
     })
 
