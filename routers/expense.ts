@@ -3,12 +3,14 @@ import {ExpensesRecord} from "../records/expenses.record";
 import {AddNewExpense, ExpenseEntity} from "../types";
 import {ValidationError} from "../utils/errors";
 
-export const expensesRouter =Router()
+export const expensesRouter = Router();
 
 expensesRouter
     .get('/', async (req, res) => {
         const summary = await ExpensesRecord.getSummary();
+
         const allExpenses = await ExpensesRecord.listAll();
+
         const sortedData = allExpenses.sort(
             (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
         );
@@ -32,7 +34,7 @@ expensesRouter
             summary,
             allExpenses,
             expensesGroupedByDate,
-        })
+        });
     })
 
     .get('/:year', async (req, res) => {
@@ -40,7 +42,7 @@ expensesRouter
 
         res.json({
             summaryYear,
-        })
+        });
     })
 
     .get('/:year/:month', async (req, res) => {
@@ -48,39 +50,41 @@ expensesRouter
 
         res.json({
             summaryMonth,
-        })
+        });
     })
 
     .post('/', async (req, res) => {
-        const newExpense = new ExpensesRecord(req.body as AddNewExpense)
-        await newExpense.insert()
+        const newExpense = new ExpensesRecord(req.body as AddNewExpense);
 
-        res.json(newExpense)
+        await newExpense.insert();
+
+        res.json(newExpense);
     })
 
     .put('/edit/:id', async (req, res) => {
-        const expense = await ExpensesRecord.getOne(req.params.id)
+        const expense = await ExpensesRecord.getOne(req.params.id);
+
         if(!expense) {
-            throw new ValidationError('No such expense!')
+            throw new ValidationError('No such expense!');
         }
 
-        await expense.updateRecord(req.body)
+        await expense.updateRecord(req.body);
 
         res.json({
             answer: `OK`,
             name: req.body.name,
             newExpense: expense
-        })
+        });
     })
 
     .delete('/:id', async (req, res) => {
-        const expenseToDelete = await ExpensesRecord.getOne(req.params.id)
+        const expenseToDelete = await ExpensesRecord.getOne(req.params.id);
 
         if (!expenseToDelete) {
             throw new ValidationError('No such expense!')
-        }
+        };
 
-        await expenseToDelete.delete()
+        await expenseToDelete.delete();
 
-        res.end()
+        res.end();
     })
