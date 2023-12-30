@@ -2,12 +2,14 @@ import {ExpenseEntity} from "../types";
 import {pool} from "../utils/db";
 import {FieldPacket} from "mysql2"
 import {v4 as uuid} from "uuid"
+import { format } from 'date-fns';
 
 interface SummaryMonth {
     sum: number,
     categoryMost: string,
     categoryLeast: string,
     latest: string,
+    cost: number,
     maxAmountCat: number,
     minAmountCat: number,
 }
@@ -89,22 +91,27 @@ export class ExpensesRecord implements ExpenseEntity {
     };
 
     static async getMonthSummary(year: string | undefined, month: string | undefined): Promise<SummaryMonth> {
-        const [sum] = await pool.execute("SELECT SUM(cost) AS sum FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month", {
-            year: year,
-            month: month,
-        }) as SummaryResultsMonth;
-        const [latest] = await pool.execute("SELECT name as latest FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month ORDER BY month DESC LIMIT 1", {
-            year: year,
-            month: month,
-        }) as SummaryResultsMonth;
-        const [categoryMost] = await pool.execute("SELECT category AS categoryMost FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY SUM(cost) DESC LIMIT 1", {
-            year: year,
-            month: month,
-        }) as SummaryResultsMonth;
-        const [categoryLeast] = await pool.execute("SELECT category AS categoryLeast FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY SUM(cost) ASC LIMIT 1", {
-            year: year,
-            month: month,
-        }) as SummaryResultsMonth;
+        // const monthNumber = format(new Date(`${month} 1, ${year}`), 'M');
+
+        const [sum] = await pool.execute(
+            "SELECT SUM(cost) AS sum FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month",
+            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+        ) as SummaryResultsMonth;
+
+        const [latest] = await pool.execute(
+            "SELECT name AS latest, cost FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month ORDER BY cost DESC LIMIT 1",
+            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+        ) as SummaryResultsMonth;
+
+        const [categoryMost] = await pool.execute(
+            "SELECT category AS categoryMost, SUM(cost) AS maxAmountCat FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY maxAmountCat DESC LIMIT 1",
+            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+        ) as SummaryResultsMonth;
+
+        const [categoryLeast] = await pool.execute(
+            "SELECT category AS categoryLeast, SUM(cost) AS minAmountCat FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY minAmountCat ASC LIMIT 1",
+            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+        ) as SummaryResultsMonth;
 
         return {
             ...sum[0],
@@ -114,7 +121,8 @@ export class ExpensesRecord implements ExpenseEntity {
         };
     };
 
-    static async listAll(): Promise<ExpensesRecord[]> {
+
+static async listAll(): Promise<ExpensesRecord[]> {
         const [results] = await pool.execute("SELECT * FROM `spendings`") as ExpensesRecordResults;
 
         results.forEach((expense: any) => {
