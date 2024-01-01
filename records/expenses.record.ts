@@ -127,6 +127,7 @@ static async listAll(): Promise<ExpensesRecord[]> {
 
         results.forEach((expense: any) => {
             const parsedDate: Date = new Date(expense.month);
+            parsedDate.setDate(parsedDate.getDate() + 1); // Dodaj jeden dzień
             expense.month = parsedDate.toISOString().split('T')[0];
         });
 
