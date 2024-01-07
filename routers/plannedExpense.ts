@@ -2,82 +2,99 @@ import Router from "express"
 import {AddNewExpense, ExpenseEntity} from "../types";
 import {ValidationError} from "../utils/errors";
 import {PlannedExpensesRecord} from "../records/plannedExpenses.record";
+import {} from "../records/expenses.record";
 
 export const plannedExpensesRouter =Router()
 
 plannedExpensesRouter
     .get('/', async (req, res) => {
-        const allExpenses = await PlannedExpensesRecord.listAll()
-        /**
-         * TODO: NA TEN MOMENT SKUPIĆ SIĘ NA CZĘŚCI ZWIĄZANEJ Z BYŁYMI WYDATKAMI, NIE TYMI KTÓRE SIĘ ODBĘDĄ, TO MOŻNA POTEM ZAIMPLEMENTOWAĆ JAKO NOWE OKNO/OPCJA NA FRONCIE JAKO NOWY TAB
-         */
+        const summary = await PlannedExpensesRecord.getSummary();
+
+        const allExpenses = await PlannedExpensesRecord.listAll();
+
         const sortedData = allExpenses.sort(
             (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
         );
 
-        const expensesGroupedByDate: Record<string, ExpenseEntity[]> = sortedData.reduce(
+        const expensesGroupedByDate: Record<string, Record<string, ExpenseEntity[]>> = sortedData.reduce(
             (acc, obj) => {
                 const date = new Date(obj.month);
                 const year = date.getFullYear();
                 const month = date.toLocaleString('en-US', { month: 'long' });
-                const key = `${month} ${year}`;
 
-                acc[key] = acc[key] || [];
-                acc[key].push(obj);
-
-                return acc;
-            },
-            {} as Record<string, ExpenseEntity[]>
-        );
-
-        const expensesGroupedByCategory: Record<string, ExpenseEntity[]> = sortedData.reduce(
-            (acc, obj) => {
-                const key = obj.category;
-
-                acc[key] = acc[key] || [];
-                acc[key].push(obj);
+                acc[year] = acc[year] || {};
+                acc[year][month] = acc[year][month] || [];
+                acc[year][month].push(obj);
 
                 return acc;
             },
-            {} as Record<string, ExpenseEntity[]>
+            {} as Record<string, Record<string, ExpenseEntity[]>>
         );
 
         res.json({
+            summary,
             allExpenses,
             expensesGroupedByDate,
-            expensesGroupedByCategory
-        })
+        });
+    })
+
+    .get('/single/:id', async (req, res) => {
+        const oneExpense = await PlannedExpensesRecord.getOne(req.params.id);
+
+        res.json({
+            oneExpense,
+        });
+    })
+
+    .get('/:year', async (req, res) => {
+        const summaryYear = await PlannedExpensesRecord.getYearSummary(req.params.year);
+
+        res.json({
+            summaryYear,
+        });
+    })
+
+    .get('/:year/:month', async (req, res) => {
+        const summaryMonth = await PlannedExpensesRecord.getMonthSummary(req.params.year, req.params.month);
+
+        res.json({
+            summaryMonth,
+        });
     })
 
     .post('/', async (req, res) => {
-        const newExpense = new PlannedExpensesRecord(req.body as AddNewExpense)
-        await newExpense.insert()
+        const newExpense = new PlannedExpensesRecord(req.body as AddNewExpense);
 
-        res.json(newExpense)
+        await newExpense.insert();
+
+        res.json(newExpense);
     })
 
     .put('/edit/:id', async (req, res) => {
-        const expense = await PlannedExpensesRecord.getOne(req.params.id)
+        const expense = await PlannedExpensesRecord.getOne(req.params.id);
+
         if(!expense) {
-            throw new ValidationError('No such expense!')
+            throw new ValidationError('No such expense!');
         }
 
-        await expense.updateRecord(req.body)
+        await expense.updateRecord(req.body);
 
         res.json({
             answer: `OK`,
             name: req.body.name,
-        })
+            newExpense: expense
+        });
     })
 
     .delete('/:id', async (req, res) => {
-        const expenseToDelete = await PlannedExpensesRecord.getOne(req.params.id)
+        const expenseToDelete = await PlannedExpensesRecord.getOne(req.params.id);
 
         if (!expenseToDelete) {
             throw new ValidationError('No such expense!')
         }
+        ;
 
-        await expenseToDelete.delete()
+        await expenseToDelete.delete();
 
-        res.end()
-    })
+        res.end();
+    });

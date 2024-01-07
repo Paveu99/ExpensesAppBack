@@ -2,6 +2,7 @@ import Router from "express"
 import {ExpensesRecord} from "../records/expenses.record";
 import {AddNewExpense, ExpenseEntity} from "../types";
 import {ValidationError} from "../utils/errors";
+import {PlannedExpensesRecord} from "../records/plannedExpenses.record";
 
 export const expensesRouter = Router();
 
@@ -34,6 +35,14 @@ expensesRouter
             summary,
             allExpenses,
             expensesGroupedByDate,
+        });
+    })
+
+    .get('/single/:id', async (req, res) => {
+        const oneExpense = await ExpensesRecord.getOne(req.params.id);
+
+        res.json({
+            oneExpense,
         });
     })
 
