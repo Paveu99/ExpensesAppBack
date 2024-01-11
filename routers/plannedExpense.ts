@@ -86,15 +86,28 @@ plannedExpensesRouter
         });
     })
 
-    .delete('/:id', async (req, res) => {
+    .post('/move/:id', async (req, res) => {
+        await PlannedExpensesRecord.moveToExpenses(req.params.id);
+
+        res.json({
+            answer: 'OK',
+            message: 'Expense was moved to past expenses',
+        });
+    })
+
+    .delete('/delete/:id', async (req, res) => {
         const expenseToDelete = await PlannedExpensesRecord.getOne(req.params.id);
 
         if (!expenseToDelete) {
             throw new ValidationError('No such expense!')
         }
-        ;
 
         await expenseToDelete.delete();
 
+        res.json({
+            answer: `OK`,
+            name: req.body.name,
+            newExpense: expenseToDelete,
+        });
         res.end();
     });
