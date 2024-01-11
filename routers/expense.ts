@@ -2,7 +2,6 @@ import Router from "express"
 import {ExpensesRecord} from "../records/expenses.record";
 import {AddNewExpense, ExpenseEntity} from "../types";
 import {ValidationError} from "../utils/errors";
-import {PlannedExpensesRecord} from "../records/plannedExpenses.record";
 
 export const expensesRouter = Router();
 
@@ -86,14 +85,19 @@ expensesRouter
         });
     })
 
-    .delete('/:id', async (req, res) => {
+    .delete('/delete/:id', async (req, res) => {
         const expenseToDelete = await ExpensesRecord.getOne(req.params.id);
 
         if (!expenseToDelete) {
             throw new ValidationError('No such expense!')
-        };
+        }
 
         await expenseToDelete.delete();
 
+        res.json({
+            answer: `OK`,
+            name: req.body.name,
+            newExpense: expenseToDelete,
+            });
         res.end();
     })
