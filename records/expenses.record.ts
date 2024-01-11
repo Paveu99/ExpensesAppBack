@@ -91,26 +91,26 @@ export class ExpensesRecord implements ExpenseEntity {
     };
 
     static async getMonthSummary(year: string | undefined, month: string | undefined): Promise<SummaryMonth> {
-        // const monthNumber = format(new Date(`${month} 1, ${year}`), 'M');
+        const monthNumber = format(new Date(`${month} 1, ${year}`), 'M');
 
         const [sum] = await pool.execute(
             "SELECT SUM(cost) AS sum FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month",
-            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+            { year: year, month: monthNumber }
         ) as SummaryResultsMonth;
 
         const [latest] = await pool.execute(
             "SELECT name AS latest, cost FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month ORDER BY cost DESC LIMIT 1",
-            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+            { year: year, month: monthNumber }
         ) as SummaryResultsMonth;
 
         const [categoryMost] = await pool.execute(
             "SELECT category AS categoryMost, SUM(cost) AS maxAmountCat FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY maxAmountCat DESC LIMIT 1",
-            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+            { year: year, month: monthNumber }
         ) as SummaryResultsMonth;
 
         const [categoryLeast] = await pool.execute(
             "SELECT category AS categoryLeast, SUM(cost) AS minAmountCat FROM `spendings` WHERE YEAR(month) = :year AND MONTH(month) = :month GROUP BY category ORDER BY minAmountCat ASC LIMIT 1",
-            { year: year, month: format(new Date(`${month} 1, ${year}`), 'M') }
+            { year: year, month: monthNumber }
         ) as SummaryResultsMonth;
 
         return {
@@ -127,7 +127,7 @@ static async listAll(): Promise<ExpensesRecord[]> {
 
         results.forEach((expense: any) => {
             const parsedDate: Date = new Date(expense.month);
-            parsedDate.setDate(parsedDate.getDate() + 1); // Dodaj jeden dzień
+            parsedDate.setDate(parsedDate.getDate() + 1);
             expense.month = parsedDate.toISOString().split('T')[0];
         });
 
@@ -141,6 +141,7 @@ static async listAll(): Promise<ExpensesRecord[]> {
 
         results.forEach((expense: any) => {
             const parsedDate: Date = new Date(expense.month);
+            parsedDate.setDate(parsedDate.getDate() + 1);
             expense.month = parsedDate.toISOString().split('T')[0];
         });
 
