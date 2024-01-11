@@ -3,6 +3,8 @@ import {pool} from "../utils/db";
 import {FieldPacket} from "mysql2"
 import {v4 as uuid} from "uuid"
 import { format } from 'date-fns';
+import {ValidationError} from "../utils/errors";
+import {ExpensesRecord} from "./expenses.record";
 
 interface SummaryMonth {
     sum: number,
@@ -141,6 +143,7 @@ export class PlannedExpensesRecord implements ExpenseEntity {
 
         results.forEach((expense: any) => {
             const parsedDate: Date = new Date(expense.month);
+            parsedDate.setDate(parsedDate.getDate() + 1);
             expense.month = parsedDate.toISOString().split('T')[0];
         });
 
@@ -171,11 +174,25 @@ export class PlannedExpensesRecord implements ExpenseEntity {
             month: body.month,
             notes: body.notes,
         });
-    }
+    };
 
     async delete(): Promise<void> {
         await pool.execute("DELETE FROM `plannedspendings` WHERE `id` = :id", {
             id: this.id
         });
     };
+
+    static async moveToExpenses(id: string): Promise<void> {
+        const plannedExpense = await PlannedExpensesRecord.getOne(id);
+
+        if (!plannedExpense) {
+            throw new ValidationError('No such planned expense!');
+        }
+
+        const { id: _, ...expenseData } = plannedExpense; // Exclude 'id' field
+        const expenseToMove = new ExpensesRecord(expenseData as ExpenseEntity);
+
+        await expenseToMove.insert();
+        await plannedExpense.delete();
+    }
 }
