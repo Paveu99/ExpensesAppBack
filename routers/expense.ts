@@ -30,10 +30,24 @@ expensesRouter
             {} as Record<string, Record<string, ExpenseEntity[]>>
         );
 
+        const expensesGroupedByYear: Record<string, ExpenseEntity[]> = sortedData.reduce(
+            (acc, obj) => {
+                const date = new Date(obj.month);
+                const year = date.getFullYear();
+
+                acc[year] = acc[year] || [];
+                acc[year].push(obj);
+
+                return acc;
+            },
+            {} as Record<string, ExpenseEntity[]>
+        );
+
         res.json({
             summary,
             allExpenses,
             expensesGroupedByDate,
+            expensesGroupedByYear,
         });
     })
 
