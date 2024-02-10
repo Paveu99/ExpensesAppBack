@@ -45,6 +45,7 @@ Take control of your finances with Expense App – where managing expenses becom
 
 # Demo
 Here is a demonstration how it works:
+- https://youtu.be/K0_sbeUVM1Q
 
 To run the application, follow these steps:
 
